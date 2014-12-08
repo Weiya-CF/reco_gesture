@@ -1,0 +1,13 @@
+# data files
+data/
+
+# other directories
+blenderTest/
+socket/
+old/
+__pycache__
+
+# other files
+*.blend
+*~
+*pyc

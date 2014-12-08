@@ -1,0 +1,197 @@
+<?xml version="1.0"?>
+<base_descr_gestes nbGestes="4">
+
+  <geste nom="2MouvtOpp" id="7" main="droite">
+  </geste>
+
+  <geste nom="2MouvtOpp" id="7" main="gauche">
+  </geste>
+
+  <geste nom="saisie" id="0" main="droite">
+    <descr nom="config">
+      <ou>
+        <symbole id="2">C</symbole>
+        <symbole id="3">pince</symbole>
+        <symbole id="4">pinceI</symbole>
+      </ou>
+    </descr>
+    <descr nom="mouvt">
+      <symbole id="0">immobile</symbole>
+    </descr>
+  </geste>
+
+  <geste nom="Origine" id="3" main="gauche">
+    <descr nom="config">
+      <indiff/>
+    </descr>
+    <descr nom="mouvt">
+      <symbole id="0">immobile</symbole>
+    </descr>
+    <descr nom="empl">
+      <loc epsilon="100">0;0;0</loc>
+    </descr>
+  </geste>
+
+  <geste nom="AxeX" id="3" main="gauche">
+    <descr nom="config">
+      <symbole id="6">index</symbole>
+    </descr>
+    <descr nom="mouvt">
+      <symbole id="0">immobile</symbole>
+    </descr>
+    <descr nom="colinPaume">
+      <axe epsilon="0.5">1;0;0</axe>
+    </descr>
+    <descr nom="orthoPaume">
+      <indiff/>
+    </descr>
+  </geste>
+
+  <geste nom="AxeY" id="3" main="gauche">
+    <descr nom="config">
+      <symbole id="6">index</symbole>
+    </descr>
+    <descr nom="mouvt">
+      <et>
+        <symbole id="1">ligne</symbole>
+        <axe epsilon="0.5">0;1;0</axe>
+      </et>
+    </descr>
+  </geste>
+
+  <geste nom="AxeZ" id="3" main="gauche">
+    <descr nom="config">
+      <symbole id="6">index</symbole>
+    </descr>
+    <descr nom="mouvt">
+      <symbole id="0">immobile</symbole>
+    </descr>
+    <descr nom="colinPaume">
+      <axe epsilon="0.5">0;0;1</axe>
+    </descr>
+    <descr nom="orthoPaume">
+      <indiff/>
+    </descr>
+  </geste>
+
+  <geste nom="MvtPouce" id="3" main="gauche">
+    <descr nom="config">
+      <symbole id="5">pouce</symbole>
+    </descr>
+    <descr nom="mouvt">
+      <et>
+        <ou>
+          <axe epsilon="0.5">0;0;1</axe>
+          <axe epsilon="0.5">0;0;-1</axe>
+        </ou>
+        <symbole id="1">ligne</symbole>
+        <axePouce epsilon="0.5"/>
+      </et>
+    </descr>
+  </geste>
+
+  <geste nom="MvtIndex" id="3" main="gauche">
+    <descr nom="config">
+      <symbole id="6">index</symbole>
+    </descr>
+    <descr nom="mouvt">
+      <et>
+        <symbole id="1">ligne</symbole>
+        <axeIndex epsilon="0.5"/>
+      </et>
+    </descr>
+  </geste>
+
+  <geste nom="2XZ" id="6" main="deux">
+    <descr nom="config MG">
+      <symbole id="6">index</symbole>
+    </descr>
+    <descr nom="colinPaume MG">
+      <et>
+        <axe epsilon="0.5">1;0;0</axe>
+        <perpend2M epsilon="0.5"/>
+      </et>
+    </descr>
+    <descr nom="config MD">
+      <symbole id="6">index</symbole>
+    </descr>
+  </geste>
+
+
+  <geste nom="2MouvtOpp" id="7" main="deux">
+    <descr nom="mouvt MG">
+      <et>
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+        <oppose2M epsilon="0.5"/>
+      </et>
+    </descr>
+    <descr nom="mouvt MD">
+      <et>
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+        <oppose2M epsilon="0.5"/>
+      </et>
+    </descr>
+  </geste>
+
+  <geste nom="2MouvtPerp" id="7" main="deux">
+    <descr nom="mouvt MG">
+      <et>
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+        <perpend2M epsilon="0.5"/>
+      </et>
+    </descr>
+    <descr nom="mouvt MD">
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+    </descr>
+  </geste>
+
+  <geste nom="2MouvtEgal" id="7" main="deux">
+    <descr nom="mouvt MG">
+      <et>
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+        <egal2M epsilon="0.5"/>
+      </et>
+    </descr>
+    <descr nom="mouvt MD">
+        <ou>
+          <symbole id="1">ligne</symbole>
+          <symbole id="2">courbe</symbole>
+        </ou>
+    </descr>
+  </geste>
+  
+
+  <geste nom="2Origine" id="7" main="deux">
+    <descr nom="config MG">
+      <indiff/>
+    </descr>
+    <descr nom="mouvt MG">
+      <symbole id="0">immobile</symbole>
+    </descr>
+    <descr nom="empl MG">
+      <egal2M epsilon="50"/>
+    </descr>
+    <descr nom="config MD">
+      <indiff/>
+    </descr>
+    <descr nom="mouvt MD">
+      <symbole id="0">immobile</symbole>
+    </descr>
+  </geste>
+
+</base_descr_gestes>
