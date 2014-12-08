@@ -1,12 +1,42 @@
 import socket
 import recoDataStructure as rds
 import sys
-from PySide import QtGui
+from PySide import QtCore, QtGui, QtNetwork
 
-class ARTGloveReceiver:
-    def __init__(self):
+class ARTGloveReceiver(QtGui.QDialog):
+    def __init__(self, parent=None):
+        super(ARTGloveReceiver, self).__init__(parent)
+        self.statusLabel = QtGui.QLabel("Listening for broadcasted messages")
+        quitButton = QtGui.QPushButton("&Quit")
+        self.udpSocket = QtNetwork.QUdpSocket(self)
+        self.udpSocket.bind(6000)
+        self.udpSocket.readyRead.connect(self.processPendingDatagrams)
+        quitButton.clicked.connect(self.close)
+        buttonLayout = QtGui.QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(quitButton)
+        buttonLayout.addStretch(1)
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.addWidget(self.statusLabel)
+        mainLayout.addLayout(buttonLayout)
+        self.setLayout(mainLayout)
+        self.setWindowTitle("ART Glove Receiver")
+        
         self._new_frame_arrive = False
         self._data = rds.ARTGloveFrame()
+        
+    def processPendingDatagrams(self):
+        while self.udpSocket.hasPendingDatagrams():
+            datagram, host, port = self.udpSocket.readDatagram(self.udpSocket.pendingDatagramSize())
+            try:
+                # Python v3.
+                datagram = str(datagram, encoding='utf-8')
+            except TypeError:
+                # Python v2.
+                pass
+            #self.statusLabel.setText("Received datagram: \"%s\"" % datagram)
+            self.receiveGloveFrame(datagram)
+            print(self._data)
 
     def receiveGloveFrame(self, msg):
         lines = msg.split('\n')
@@ -43,33 +73,9 @@ class ARTGloveReceiver:
 
 
 
-def main(): 
-    app = QtGui.QApplication(sys.argv)
-    # Create a Label and show it
-    label = QtGui.QLabel("Hello World")
-    label.show()
-    # Enter Qt application main loop
-    app.exec_()
-    sys.exit()
-
-
 if __name__ == "__main__":
-    UDP_IP = "0.0.0.0"
-    UDP_PORT = 6000
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
-
+    app = QtGui.QApplication(sys.argv)
     receiver = ARTGloveReceiver()
-
-    main()
-
-    print("after main")
-
-    while True:
-        data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-        receiver.receiveGloveFrame(data.decode('utf-8'))
-        #print(data.decode('utf-8'))
-        if receiver._new_frame_arrive:
-            print(receiver)	
+    receiver.show()
+    sys.exit(receiver.exec_())
 
