@@ -3,26 +3,45 @@ import recoDataStructure as rds
 import sys
 from PySide import QtCore, QtGui, QtNetwork
 
-class ARTGloveReceiver(QtGui.QDialog):
-    def __init__(self, parent=None):
-        super(ARTGloveReceiver, self).__init__(parent)
-        self.statusLabel = QtGui.QLabel("Listening for broadcasted messages")
+class ARTGloveClient(QtGui.QMainWindow):
+    def __init__(self):
+        super(ARTGloveClient, self).__init__()
+
+        # GUI part
+        pannel = QtGui.QWidget()
+        self.setCentralWidget(pannel)
+
+        self._status_label = QtGui.QLabel("Messages")
         quitButton = QtGui.QPushButton("&Quit")
+        quitButton.clicked.connect(self.close)
+
+        startToggleButton = QtGui.QPushButton("Start/Stop", self)
+        startToggleButton.clicked.connect(self.startToggle)
+
+        buttonLayout = QtGui.QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(startToggleButton)
+        buttonLayout.addWidget(quitButton)
+        
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.addWidget(self._status_label)
+        mainLayout.addLayout(buttonLayout)
+        pannel.setLayout(mainLayout)
+
+        self.setWindowTitle("ART Glove Receiver")
+        self.statusBar().showMessage("Listening for broadcasted messages")
+
+        self.setMinimumSize(160,160)
+        self.resize(600,400)
+
+        # UDP client part
         self.udpSocket = QtNetwork.QUdpSocket(self)
         self.udpSocket.bind(6000)
         self.udpSocket.readyRead.connect(self.processPendingDatagrams)
-        quitButton.clicked.connect(self.close)
-        buttonLayout = QtGui.QHBoxLayout()
-        buttonLayout.addStretch(1)
-        buttonLayout.addWidget(quitButton)
-        buttonLayout.addStretch(1)
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.addWidget(self.statusLabel)
-        mainLayout.addLayout(buttonLayout)
-        self.setLayout(mainLayout)
-        self.setWindowTitle("ART Glove Receiver")
         
+        # Core application part
         self._new_frame_arrive = False
+        self._running = False
         self._data = rds.ARTGloveFrame()
         
     def processPendingDatagrams(self):
@@ -35,10 +54,19 @@ class ARTGloveReceiver(QtGui.QDialog):
                 # Python v2.
                 pass
             #self.statusLabel.setText("Received datagram: \"%s\"" % datagram)
-            self.receiveGloveFrame(datagram)
+            self.buildGloveFrame(datagram)
             print(self._data)
 
-    def receiveGloveFrame(self, msg):
+    def startToggle(self):
+        self._running = not self._running
+        self._status_label.setText(str(self._running))
+        #print(self._running)
+        
+    def buildGloveFrame(self, msg):
+        """Convert the message from string to a Glove object
+           Store the object inside a list
+           Set new_frame_arrive to True if the new frame is not empty
+        """
         lines = msg.split('\n')
         self._data._fr = int(lines[0].split(' ')[1])
         self._data._timestamp = float(lines[1].split(' ')[1])
@@ -75,7 +103,7 @@ class ARTGloveReceiver(QtGui.QDialog):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    receiver = ARTGloveReceiver()
-    receiver.show()
-    sys.exit(receiver.exec_())
+    client_window = ARTGloveClient()
+    client_window.show()
+    sys.exit(app.exec_())
 
