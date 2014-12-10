@@ -9,9 +9,7 @@ class RecoPipeline:
     def __init__(self):
         # for training, use right hand
         self._dataReceiver = DataReceiver(1)
-
         self._featureExtractor = FeatureExtractor()
-        self._classifier = Rubine("conf/feature_list.txt")
         
         # for recognition
         self._dataReceiver_l = DataReceiver(0)
@@ -19,6 +17,7 @@ class RecoPipeline:
 
         self._featureExtractor_l = FeatureExtractor()
         self._featureExtractor_r = FeatureExtractor()
+
         self._classifier = Rubine("conf/feature_list.txt")
         
 

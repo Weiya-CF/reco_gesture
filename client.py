@@ -1,7 +1,8 @@
-import socket
-import recoDataStructure as rds
-import sys
+import sys, os
 from PySide import QtCore, QtGui, QtNetwork
+
+import recoDataStructure as rds
+from recoPipeline import RecoPipeline
 
 class ARTGloveClient(QtGui.QMainWindow):
     def __init__(self):
@@ -11,25 +12,98 @@ class ARTGloveClient(QtGui.QMainWindow):
         pannel = QtGui.QWidget()
         self.setCentralWidget(pannel)
 
-        self._status_label = QtGui.QLabel("Messages")
-        quitButton = QtGui.QPushButton("&Quit")
-        quitButton.clicked.connect(self.close)
+        tabWidget = QtGui.QTabWidget()
+        tab_training = QtGui.QWidget()
+        tab_reco = QtGui.QWidget()
+        tabWidget.addTab(tab_training, "Training")
+        tabWidget.addTab(tab_reco, "Recognition")
 
-        startToggleButton = QtGui.QPushButton("Start/Stop", self)
-        startToggleButton.clicked.connect(self.startToggle)
+        # --- training part ---
+        tr_global_layout = QtGui.QVBoxLayout()
+        tr_uname_layout = QtGui.QHBoxLayout()
+        self._tr_uname_field = QtGui.QLineEdit()
+        self._tr_uname_button = QtGui.QPushButton("Confirm")
+        self._tr_uname_button.clicked.connect(self.trConfirmUserName)
+        tr_uname_layout.addWidget(QtGui.QLabel("Provide a user name:"))
+        tr_uname_layout.addWidget(self._tr_uname_field)
+        tr_uname_layout.addWidget(self._tr_uname_button)
 
-        buttonLayout = QtGui.QHBoxLayout()
+        tr_file_layout = QtGui.QHBoxLayout()
+        self._tr_file_gname_field = QtGui.QLineEdit()
+        self._tr_file_fpath_field = QtGui.QLineEdit()
+        self._tr_file_select_button = QtGui.QPushButton("Browse")
+        self._tr_file_confirm_button = QtGui.QPushButton("Confirm")
+        self._tr_file_confirm_button.setEnabled(False)
+        tr_file_layout.addWidget(QtGui.QLabel("Gesture Name:"))
+        tr_file_layout.addWidget(self._tr_file_gname_field)
+        tr_file_layout.addWidget(QtGui.QLabel("File:"))
+        tr_file_layout.addWidget(self._tr_file_fpath_field)
+        tr_file_layout.addWidget(self._tr_file_select_button)
+        tr_file_layout.addWidget(self._tr_file_confirm_button)
+
+        tr_rt_layout = QtGui.QHBoxLayout()
+        self._tr_rt_gname_field = QtGui.QLineEdit()
+        self._tr_rt_toggle_button = QtGui.QPushButton("Start")
+        self._tr_rt_toggle_button.setEnabled(False)
+        self._tr_rt_toggle_button.clicked.connect(self.trRealtimeTraining)
+        tr_rt_layout.addWidget(QtGui.QLabel("Gesture Name:"))
+        tr_rt_layout.addWidget(self._tr_rt_gname_field)
+        tr_rt_layout.addWidget(self._tr_rt_toggle_button)
+
+        self._tr_msg_box = QtGui.QTextEdit("This is the message window")
+
+        # --- recognition part ---
+        re_global_layout = QtGui.QVBoxLayout()
+        re_db_layout = QtGui.QHBoxLayout()
+        self._re_db_fpath_field = QtGui.QLineEdit()
+        self._re_db_select_button = QtGui.QPushButton("Browse")
+        self._re_db_confirm_button = QtGui.QPushButton("Confirm")
+        re_db_layout.addWidget(QtGui.QLabel("Select an existing DB:"))
+        re_db_layout.addWidget(self._re_db_fpath_field)
+        re_db_layout.addWidget(self._re_db_select_button)
+        re_db_layout.addWidget(self._re_db_confirm_button)
+
+        re_uname_layout = QtGui.QHBoxLayout()
+        self._re_uname_label = QtGui.QLabel("Undefined")
+        re_uname_layout.addWidget(QtGui.QLabel("Recognition for user:"))
+        re_uname_layout.addWidget(self._re_uname_label)
+
+        re_action_layout = QtGui.QHBoxLayout()
+        self._re_gname_field = QtGui.QLabel("Undefined")
+        self._re_toggle_button = QtGui.QPushButton("Start")
+        re_action_layout.addWidget(QtGui.QLabel("Current gesture:"))
+        re_action_layout.addWidget(self._re_gname_field)
+        re_action_layout.addWidget(self._re_toggle_button)
+        
+        self._re_msg_box = QtGui.QTextEdit("This is the message window")
+
+        # --- global layout ---
+        tr_global_layout.addLayout(tr_uname_layout)
+        tr_global_layout.addWidget(QtGui.QLabel("Training from file:"))
+        tr_global_layout.addLayout(tr_file_layout)
+        tr_global_layout.addWidget(QtGui.QLabel("Real-time Training:"))
+        tr_global_layout.addLayout(tr_rt_layout)
+        tr_global_layout.addWidget(self._tr_msg_box)
+        re_global_layout.addLayout(re_db_layout)
+        re_global_layout.addLayout(re_uname_layout)
+        re_global_layout.addLayout(re_action_layout)
+        re_global_layout.addWidget(self._re_msg_box)
+        tab_training.setLayout(tr_global_layout)
+        tab_reco.setLayout(re_global_layout)
+        """quitButton = QtGui.QPushButton("&Quit")
+        quitButton.clicked.connect(self.close)"""
+
+        """buttonLayout = QtGui.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(startToggleButton)
-        buttonLayout.addWidget(quitButton)
+        buttonLayout.addWidget(quitButton)"""
         
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.addWidget(self._status_label)
-        mainLayout.addLayout(buttonLayout)
+        mainLayout.addWidget(tabWidget)
         pannel.setLayout(mainLayout)
-
-        self.setWindowTitle("ART Glove Receiver")
-        self.statusBar().showMessage("Listening for broadcasted messages")
+        
+        self.setWindowTitle("ART Gesture Analyser")
+        self.statusBar().showMessage("Version 1.0")
 
         self.setMinimumSize(160,160)
         self.resize(600,400)
@@ -40,9 +114,12 @@ class ARTGloveClient(QtGui.QMainWindow):
         self.udpSocket.readyRead.connect(self.processPendingDatagrams)
         
         # Core application part
+        self._uname = ""
         self._new_frame_arrive = False
-        self._running = False
+        self._tr_rt_running = False
         self._data = rds.ARTGloveFrame()
+        
+        self._rp = RecoPipeline()
         
     def processPendingDatagrams(self):
         while self.udpSocket.hasPendingDatagrams():
@@ -57,14 +134,53 @@ class ARTGloveClient(QtGui.QMainWindow):
             self.buildGloveFrame(datagram)
             print(self._data)
 
-    def startToggle(self):
-        self._running = not self._running
-        self._status_label.setText(str(self._running))
-        #print(self._running)
-        
+    def trConfirmUserName(self):
+        """ If the user does not exist, create a directory with the given name
+            Otherwise load the trained classifier into memory
+            Activate buttons for training if the name is valid
+        """
+        self._uname = self._tr_uname_field.text()
+        if self._uname == "":
+            self._tr_msg_box.append("Please provide a valid user name.")
+        else:
+            if not os.path.exists("conf/"+self._uname):
+                os.makedirs("conf/"+self._uname)
+
+            # enable buttons
+            self._tr_file_confirm_button.setEnabled(True)
+            self._tr_rt_toggle_button.setEnabled(True)
+
+            # load the classifier
+            fname = "conf/"+self._uname+"/trained_classifier.txt"
+            if os.path.isfile(fname):
+                self._rp._classifier.loadClassifierFromFile(fname)
+            
+            self._tr_msg_box.append("Ready to train for user <"+self._uname+">.")
+
+    def trRealtimeTraining(self):
+        """ Start/Stop training for a given gesture with a valid name
+            Start: pass received data to pipeline
+            Stop: save the classifier to file
+        """
+        gname = self._tr_rt_gname_field.text()
+        if gname == "":
+            self._tr_msg_box.append("Please provide a valid gesture name.")
+        else:
+            if not self._tr_rt_running:
+                # to start
+                self._tr_rt_running = True
+                self._tr_rt_toggle_button.setText("Stop")
+                self._tr_msg_box.append("Start training for <"+gname+">.")
+            else:
+                # to stop
+                self._tr_rt_running = False
+                self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt")
+                self._tr_rt_toggle_button.setText("Start")
+                self._tr_msg_box.append("Stop training for <"+gname+">. Classifier saved.")
+
     def buildGloveFrame(self, msg):
         """Convert the message from string to a Glove object
-           Store the object inside a list
+           Store the object inside a list (1 or more hands at a time)
            Set new_frame_arrive to True if the new frame is not empty
         """
         lines = msg.split('\n')

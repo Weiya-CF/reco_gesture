@@ -130,20 +130,20 @@ class Rubine:
             i += 1
         print("The precision is:",round(right_num / test_num, 4) * 100,"%")
 
-    def saveClassifierToFile(self):
+    def saveClassifierToFile(self, fpath):
         """Save a list of weight for each feature and a list of sample for each gesture class.
             This function is called at the end of the training process"""
         res = ""
         for c in self._class_list:
             res += str(c)
         # write to file
-        with open('conf/trained_classifier.txt', 'w') as f:
+        with open(fpath, 'w') as f:
             f.write(res)
         print("The trained classifier has been saved successfully.")
 
-    def loadClassifierFromFile(self):
+    def loadClassifierFromFile(self, fpath):
         """Load the classifier directly from file so we don't have to do the training each time we lance the program"""
-        c_file = open('conf/trained_classifier.txt', 'r')
+        c_file = open(fpath, 'r') #'conf/trained_classifier.txt', 'r')
         lines = c_file.readlines()
         c_file.close()
     

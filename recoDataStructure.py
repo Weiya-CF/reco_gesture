@@ -1,4 +1,4 @@
-#from recoUtils import Matrix
+from recoUtils import Matrix
 
 class ARTGloveFrame:
     """The structure which contains a frame of tracking data"""
