@@ -4,16 +4,17 @@ class Rubine:
     """This is a classifier using the algorithm introduced by Rubine"""
     def __init__(self, feature_file):
         self._class_list = list()
-        self._feature_list = self.createFeatureListFromFile(feature_file)
+        self._feature_file = feature_file
+        self._feature_list = self.createFeatureListFromFile()
         
         # empty matrix
         self._cc_matrix = Matrix(len(self._feature_list))
         self._inverted_cc_matrix = None
     
     
-    def createFeatureListFromFile(self, feature_file):
+    def createFeatureListFromFile(self):
         """Initiate the feature list from file"""
-        fea_file = open(feature_file, 'r')
+        fea_file = open(self._feature_file, 'r')
         lines = fea_file.readlines()
         fea_file.close()
         
@@ -84,17 +85,22 @@ class Rubine:
             print("The gesture",gclass_name,"doesn't exist.")
         else:
             gclass._train_sample_nb = int(len(gclass._sample_list) * 0.8)
-
-            # 1) calculate covariance matrix for this class
-            gclass.calculateCovarianceMatrix()
+            if gclass._train_sample_nb < 20:
+                # not enough samples
+                #print("not enough samples")
+                return 1
+            else:
+                # 1) calculate covariance matrix for this class
+                gclass.calculateCovarianceMatrix()
             
-            # 2) calculate common covariance matrix
-            self.calculateCommonCovarianceMatrix()
+                # 2) calculate common covariance matrix
+                self.calculateCommonCovarianceMatrix()
 
-            # 3) calculate weight for each feature and base weight
-            gclass.calculateFeatureWeight(self._inverted_cc_matrix)
-            gclass.calculateBaseWeight()
-            print("Training for gesture",gclass_name,"has been done successfully.")
+                # 3) calculate weight for each feature and base weight
+                gclass.calculateFeatureWeight(self._inverted_cc_matrix)
+                gclass.calculateBaseWeight()
+                print("Training for gesture",gclass_name,"has been done successfully.")
+                return 0
 
     def showTrainingResult(self):
         for c in self._class_list:
@@ -108,6 +114,7 @@ class Rubine:
         c_name = ""
         for c in self._class_list:
             v = c.giveScore(s_list)
+            print("class:",c._name,"has score",v)
             if v > mv:
                 mv = v
                 c_name = c._name
@@ -146,12 +153,34 @@ class Rubine:
         c_file = open(fpath, 'r') #'conf/trained_classifier.txt', 'r')
         lines = c_file.readlines()
         c_file.close()
+
+        print(len(lines))
     
         # Create a list of GestureClass
-        for line in lines:
-            if line[0] != '#':
-                f = self.createFeatureListFromFile(feature_file)
-                words = line[0:-1].split(' ')
-                c = GestureClass(words[0], words[1], f)
+        i = 0
+        while i < len(lines):
+            if lines[i][:-1] == "<class>":
+                i += 1
+                c = GestureClass(lines[i][:-1], self._feature_list)
+                print("new gesture :",c._name,"added")
+                i += 1
+                k = 0
+                while k < len(c._feature_list):
+                    c._feature_list[k]._weight = float(lines[i+k].split(':')[1][:-1])
+                    k += 1
+                i += k
+                c._base_weight = float(lines[i][:-1])
+                i += 1
+                c._train_sample_nb = int(lines[i][:-1])
+                i += 2
+                k = 0
+                while k < c._train_sample_nb:
+                    sample = map(float, lines[i+k].split())
+                    c._sample_list.append(sample)
+                    k += 1
                 self._class_list.append(c)
-        print(len(self._class_list),"new gesture classes have been loaded.")
+                i += k+2
+            else:
+                i += 1
+                    
+        print(len(self._class_list)," gesture classes have been loaded.")

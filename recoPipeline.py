@@ -3,8 +3,8 @@ from featureExtraction import FeatureExtractor
 from classifier import Rubine
 
 class RecoPipeline:
-    """The gesture dependents only on the forme of the hand, and is the same for left and right hand
-        The gesture is not on two hands level. More complicated gestures sure dependent on the gestures of both hands
+    """A gesture dependents only on the forme of the hand, and is the same (symmetric) for left and right hand
+        More complicated gestures sure dependent on the combination of both hands's gestures
     """
     def __init__(self):
         # for training, use right hand
@@ -21,7 +21,7 @@ class RecoPipeline:
         self._classifier = Rubine("conf/feature_list.txt")
         
 
-    def train(self, file_path, gclass_name):
+    def trainFromFile(self, file_path, gclass_name):
         """Use samples to train the pipeline (learning process)
             file_path --> the file which contains training samples
             gclass_name --> the name of associated gesture class
@@ -54,24 +54,26 @@ class RecoPipeline:
         """Get the precision of recognition for a given gesture class"""
         return self._classifier.calcultatePrecision(gclass_name)
 
-    def recognition(self):
-        """The main function to do gesture recognition"""
-        print("Begin recognition process...")
+    def trainRealTime(self, gclass_name, g_frame):
+        """ For real time training"""
+        self._dataReceiver.readRealTimeData(g_frame)
+        self._featureExtractor.addSampleFrame(self._dataReceiver.getOneSampleFrameRT())
+        if self._featureExtractor._seg_activated == True:
+            rtuple = self._featureExtractor.getRecoTuple()
+            self._classifier.addRecoTupleForTraining(rtuple, gclass_name)
 
-        sample_left = self._dataReceiver_l.getOneSampleFrame()
-        sample_right = self._dataReceiver_r.getOneSampleFrame()
-
-        self._featureExtractor_l.addSampleFrame(sample_left)
-        if self._featureExtractor_l._seg_activated == True:
-            rtuple = self._featureExtractor_l.getRecoTuple()
-            self._classifier.recognition(rtuple._s_list)
-            print(rtuple._l_or_r, rtuple._timestamp)
+    def recognition(self, g_frame):
+        """The main function to do gesture recognition, now only for right hand (TODO)"""
+        self._dataReceiver_r.readRealTimeData(g_frame)
+        #sample_left = self._dataReceiver_l.getOneSampleFrameRT()
+        sample_right = self._dataReceiver_r.getOneSampleFrameRT()
 
         self._featureExtractor_r.addSampleFrame(sample_right)
         if self._featureExtractor_r._seg_activated == True:
             rtuple = self._featureExtractor_r.getRecoTuple()
-            self._classifier.recognition(rtuple._s_list)
-            print(rtuple._l_or_r, rtuple._timestamp)
+            return self._classifier.recognition(rtuple._s_list)
+        else:
+            return None
 
     def recognitionFromFile(self, file_path):
         """Gesture recognition for the data stored in a file"""

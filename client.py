@@ -54,15 +54,6 @@ class ARTGloveClient(QtGui.QMainWindow):
 
         # --- recognition part ---
         re_global_layout = QtGui.QVBoxLayout()
-        re_db_layout = QtGui.QHBoxLayout()
-        self._re_db_fpath_field = QtGui.QLineEdit()
-        self._re_db_select_button = QtGui.QPushButton("Browse")
-        self._re_db_confirm_button = QtGui.QPushButton("Confirm")
-        re_db_layout.addWidget(QtGui.QLabel("Select an existing DB:"))
-        re_db_layout.addWidget(self._re_db_fpath_field)
-        re_db_layout.addWidget(self._re_db_select_button)
-        re_db_layout.addWidget(self._re_db_confirm_button)
-
         re_uname_layout = QtGui.QHBoxLayout()
         self._re_uname_label = QtGui.QLabel("Undefined")
         re_uname_layout.addWidget(QtGui.QLabel("Recognition for user:"))
@@ -71,6 +62,8 @@ class ARTGloveClient(QtGui.QMainWindow):
         re_action_layout = QtGui.QHBoxLayout()
         self._re_gname_field = QtGui.QLabel("Undefined")
         self._re_toggle_button = QtGui.QPushButton("Start")
+        self._re_toggle_button.setEnabled(False)
+        self._re_toggle_button.clicked.connect(self.reRealtimeRecognition)
         re_action_layout.addWidget(QtGui.QLabel("Current gesture:"))
         re_action_layout.addWidget(self._re_gname_field)
         re_action_layout.addWidget(self._re_toggle_button)
@@ -84,7 +77,6 @@ class ARTGloveClient(QtGui.QMainWindow):
         tr_global_layout.addWidget(QtGui.QLabel("Real-time Training:"))
         tr_global_layout.addLayout(tr_rt_layout)
         tr_global_layout.addWidget(self._tr_msg_box)
-        re_global_layout.addLayout(re_db_layout)
         re_global_layout.addLayout(re_uname_layout)
         re_global_layout.addLayout(re_action_layout)
         re_global_layout.addWidget(self._re_msg_box)
@@ -115,8 +107,10 @@ class ARTGloveClient(QtGui.QMainWindow):
         
         # Core application part
         self._uname = ""
+        self._gname = ""
         self._new_frame_arrive = False
         self._tr_rt_running = False
+        self._re_rt_running = False
         self._data = rds.ARTGloveFrame()
         
         self._rp = RecoPipeline()
@@ -124,15 +118,20 @@ class ARTGloveClient(QtGui.QMainWindow):
     def processPendingDatagrams(self):
         while self.udpSocket.hasPendingDatagrams():
             datagram, host, port = self.udpSocket.readDatagram(self.udpSocket.pendingDatagramSize())
-            try:
-                # Python v3.
-                datagram = str(datagram, encoding='utf-8')
-            except TypeError:
-                # Python v2.
-                pass
-            #self.statusLabel.setText("Received datagram: \"%s\"" % datagram)
-            self.buildGloveFrame(datagram)
-            print(self._data)
+            #str(datagram, encoding='utf-8')
+            if self._tr_rt_running:
+                self.buildGloveFrame(datagram.__str__())
+                if self._new_frame_arrive:
+                    #print(self._data)
+                    self._rp.trainRealTime(self._gname, self._data)
+            else:
+                if self._re_rt_running:
+                    self.buildGloveFrame(datagram.__str__())
+                    if self._new_frame_arrive:
+                        reco_gname = self._rp.recognition(self._data)
+                        if reco_gname is not None:
+                            self._re_gname_field.setText(reco_gname)
+                    
 
     def trConfirmUserName(self):
         """ If the user does not exist, create a directory with the given name
@@ -149,6 +148,8 @@ class ARTGloveClient(QtGui.QMainWindow):
             # enable buttons
             self._tr_file_confirm_button.setEnabled(True)
             self._tr_rt_toggle_button.setEnabled(True)
+            self._re_uname_label.setText(self._uname)
+            self._re_toggle_button.setEnabled(True)
 
             # load the classifier
             fname = "conf/"+self._uname+"/trained_classifier.txt"
@@ -162,21 +163,50 @@ class ARTGloveClient(QtGui.QMainWindow):
             Start: pass received data to pipeline
             Stop: save the classifier to file
         """
-        gname = self._tr_rt_gname_field.text()
-        if gname == "":
+        self._gname = self._tr_rt_gname_field.text()
+        if self._gname == "":
             self._tr_msg_box.append("Please provide a valid gesture name.")
         else:
             if not self._tr_rt_running:
                 # to start
                 self._tr_rt_running = True
+                if not self._rp._classifier.hasGestureClass(self._gname):
+                    self._rp._classifier.createGestureClass(self._gname)
                 self._tr_rt_toggle_button.setText("Stop")
-                self._tr_msg_box.append("Start training for <"+gname+">.")
+                self._tr_msg_box.append("Start training for <"+self._gname+">.")
             else:
                 # to stop
                 self._tr_rt_running = False
-                self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt")
                 self._tr_rt_toggle_button.setText("Start")
-                self._tr_msg_box.append("Stop training for <"+gname+">. Classifier saved.")
+
+                # start to process training data
+                res = self._rp._classifier.train(self._gname)
+                if res == 0:
+                    self._rp._classifier.showTrainingResult()
+                    self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt")
+                    self._tr_msg_box.append("Stop training for <"+self._gname+">. Classifier saved.")
+                elif res == 1:
+                    self._tr_msg_box.append("Stop training for <"+self._gname+">. Not enough samples so nothing changed.")
+
+    def reRealtimeRecognition(self):
+        """ Start/Stop recognition
+            Start: pass received data to pipeline
+            Stop: just stop
+        """
+        if not self._re_rt_running:
+            # to start
+            if len(self._rp._classifier._class_list) == 0:
+                self._re_msg_box.append("The pipeline is not trained yet.")
+            else:
+                self._re_rt_running = True
+                self._re_toggle_button.setText("Stop")
+                self._re_msg_box.append("Start recognition process...")
+        else:
+            # to stop
+            self._re_rt_running = False
+            self._re_toggle_button.setText("Start")
+            self._re_msg_box.append("Recognition stopped.")
+                
 
     def buildGloveFrame(self, msg):
         """Convert the message from string to a Glove object
@@ -210,7 +240,7 @@ class ARTGloveClient(QtGui.QMainWindow):
                 j += 1
             
             self._data._glove_list = list()
-            self._data._glove_list.append(rds.Glove(self._timestamp, int(base[0]), float(base[1]), int(base[2]), int(base[3]), finger_list, pos, ori))
+            self._data._glove_list.append(rds.Glove(self._data._timestamp, int(base[0]), float(base[1]), int(base[2]), int(base[3]), finger_list, pos, ori))
             self._new_frame_arrive = True
         else:
             self._new_frame_arrive = False

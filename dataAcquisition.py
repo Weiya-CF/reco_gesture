@@ -9,7 +9,7 @@ class DataReceiver:
         # 0 or 1, whether it's for the left or right hand
         self._l_or_r = l_or_r
 
-        # data structure for real time recognition
+        # data structure for real time training or recognition
         self._gloveData = None
     
         # data structure for training from file
@@ -85,13 +85,23 @@ class DataReceiver:
 
         g = Glove(int(lines[1][0:-1]), int(lines[2][0:-1]), float(lines[3][0:-1]), lr, int(lines[5][0:-1]), fingers, pos, ori)
         return g
-    
-    def getOneSampleFrame(self):
+
+    def readRealTimeData(self, g_frame):
+        """ Add a glove frame to pass later to the feature extractor """
+        for glove in g_frame._glove_list:
+            if glove._l_or_r == 1:
+                # use only right hand for now
+                self._gloveData = glove
+
+    def getOneSampleFrameFile(self):
         """Data from file, return the first data frame in the list"""
         if len(self._gloveDataList) != 0:
             return self._gloveDataList.pop(0)
         else:
             return None
+
+    def getOneSampleFrameRT(self):
+        return self._gloveData
 
     def showGlovesFromFile(self):
         for g in self._gloveDataList:
