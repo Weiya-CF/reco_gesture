@@ -37,6 +37,17 @@ class Finger:
         res += "\nTipRadius: "+str(self._radius_tip)+"\nPhalanxLength: "+str(self._phalanx_length)+"\nPalanxAngle: "+str(self._phalanx_angles)+'\n'
         return res
 
+    def toFile(self):
+        res = "<"+str(self._name)+">"
+        res += str(self._position[0])+" "+str(self._position[1])+" "+str(self._position[2])+"\n"
+        res += str(self._orientation[0])+" "+str(self._orientation[1])+" "+str(self._orientation[2])+"\n"
+        res += str(self._orientation[3])+" "+str(self._orientation[4])+" "+str(self._orientation[5])+"\n"
+        res += str(self._orientation[6])+" "+str(self._orientation[7])+" "+str(self._orientation[8])+"\n"
+        res += str(self._radius_tip)+"\n"
+        res += str(self._phalanx_length[0])+" "+str(self._phalanx_length[1])+" "+str(self._phalanx_length[2])+"\n"
+        res += str(self._phalanx_angles[0])+" "+str(self._phalanx_angles[1])+"\n"
+        return res
+
 class Glove:
     """The structure to store the raw data of a hand (coming from the glove of course)"""
     def __init__(self, t, gid, q, lr, fn, fingers, pos, ori):
@@ -64,7 +75,26 @@ class Glove:
             res += str(finger)
 
         return res
-
+    
+    def toFile(self):
+        res = "<glove>\n"
+        res += str(self._timestamp) + "\n"
+        res += str(self._quality) + "\n"
+        if self._l_or_r == 0:
+            res += "left\n"
+        else:
+            res += "right\n"
+        res += str(self._finger_number)+"\n"
+        res += str(self._position[0])+" "+str(self._position[1])+" "+str(self._position[2])+"\n"
+        res += str(self._orientation[0])+" "+str(self._orientation[1])+" "+str(self._orientation[2])+"\n"
+        res += str(self._orientation[3])+" "+str(self._orientation[4])+" "+str(self._orientation[5])+"\n"
+        res += str(self._orientation[6])+" "+str(self._orientation[7])+" "+str(self._orientation[8])+"\n"
+        res += "<fingers>\n"
+        for finger in self._fingers:
+            res += finger.toFile()
+        res += "</fingers>\n</glove>\n\n"
+        return res
+        
 
 class RecoTuple:
     """To store the data of a glove after feature extraction"""

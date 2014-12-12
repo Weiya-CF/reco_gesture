@@ -79,7 +79,7 @@ class Rubine:
 
 
     def train(self, gclass_name):
-        """Use 80 percent of sample list to calculate weight for each feature of a given gesture class"""
+        """Use 80 percent of sample list to calculate weight for each feature of a gesture class"""
         gclass = self.getGestureClassByName(gclass_name)
         if gclass is None:
             print("The gesture",gclass_name,"doesn't exist.")

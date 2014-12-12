@@ -28,13 +28,22 @@ class ARTGloveClient(QtGui.QMainWindow):
         tr_uname_layout.addWidget(self._tr_uname_field)
         tr_uname_layout.addWidget(self._tr_uname_button)
 
+        tr_record_file_layout = QtGui.QHBoxLayout()
+        self._tr_record_file_gname_field = QtGui.QLineEdit()
+        self._tr_record_file_confirm_button = QtGui.QPushButton("Start")
+        self._tr_record_file_confirm_button.setEnabled(False)
+        tr_record_file_layout.addWidget(QtGui.QLabel("Record Training File:"))
+        tr_record_file_layout.addWidget(QtGui.QLabel("Gesture Name"))
+        tr_record_file_layout.addWidget(self._tr_record_file_gname_field)
+        tr_record_file_layout.addWidget(self._tr_record_file_confirm_button)
+
         tr_file_layout = QtGui.QHBoxLayout()
         self._tr_file_gname_field = QtGui.QLineEdit()
         self._tr_file_fpath_field = QtGui.QLineEdit()
         self._tr_file_select_button = QtGui.QPushButton("Browse")
         self._tr_file_confirm_button = QtGui.QPushButton("Confirm")
         self._tr_file_confirm_button.setEnabled(False)
-        tr_file_layout.addWidget(QtGui.QLabel("Gesture Name:"))
+        tr_file_layout.addWidget(QtGui.QLabel("Gesture Name"))
         tr_file_layout.addWidget(self._tr_file_gname_field)
         tr_file_layout.addWidget(QtGui.QLabel("File:"))
         tr_file_layout.addWidget(self._tr_file_fpath_field)
@@ -46,7 +55,7 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._tr_rt_toggle_button = QtGui.QPushButton("Start")
         self._tr_rt_toggle_button.setEnabled(False)
         self._tr_rt_toggle_button.clicked.connect(self.trRealtimeTraining)
-        tr_rt_layout.addWidget(QtGui.QLabel("Gesture Name:"))
+        tr_rt_layout.addWidget(QtGui.QLabel("Gesture Name"))
         tr_rt_layout.addWidget(self._tr_rt_gname_field)
         tr_rt_layout.addWidget(self._tr_rt_toggle_button)
 
@@ -64,7 +73,7 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._re_toggle_button = QtGui.QPushButton("Start")
         self._re_toggle_button.setEnabled(False)
         self._re_toggle_button.clicked.connect(self.reRealtimeRecognition)
-        re_action_layout.addWidget(QtGui.QLabel("Current gesture:"))
+        re_action_layout.addWidget(QtGui.QLabel("Current gesture"))
         re_action_layout.addWidget(self._re_gname_field)
         re_action_layout.addWidget(self._re_toggle_button)
         
@@ -72,9 +81,10 @@ class ARTGloveClient(QtGui.QMainWindow):
 
         # --- global layout ---
         tr_global_layout.addLayout(tr_uname_layout)
-        tr_global_layout.addWidget(QtGui.QLabel("Training from file:"))
+        tr_global_layout.addWidget(QtGui.QLabel("<Training from file>"))
+        tr_global_layout.addLayout(tr_record_file_layout)
         tr_global_layout.addLayout(tr_file_layout)
-        tr_global_layout.addWidget(QtGui.QLabel("Real-time Training:"))
+        tr_global_layout.addWidget(QtGui.QLabel("<Real-time Training>"))
         tr_global_layout.addLayout(tr_rt_layout)
         tr_global_layout.addWidget(self._tr_msg_box)
         re_global_layout.addLayout(re_uname_layout)
@@ -111,7 +121,9 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._new_frame_arrive = False
         self._tr_rt_running = False
         self._re_rt_running = False
+        
         self._data = rds.ARTGloveFrame()
+        self._glove_recorder = None
         
         self._rp = RecoPipeline()
         
@@ -188,6 +200,17 @@ class ARTGloveClient(QtGui.QMainWindow):
                 elif res == 1:
                     self._tr_msg_box.append("Stop training for <"+self._gname+">. Not enough samples so nothing changed.")
 
+    def trRecordDataToFile(self):
+        """ Save tracking data into files, one file for a gesture, then do the training with these files """
+        if not self._tr_recording:
+            # to start
+            self._glove_recorder = open(self._uname+"/"+self._gname, 'w')
+            self._tr_recording = True
+            self._tr_record_file_confirm_button.setText("Stop")
+            self._re_msg_box.append("Start recording data to files...")
+        
+
+
     def reRealtimeRecognition(self):
         """ Start/Stop recognition
             Start: pass received data to pipeline
@@ -209,7 +232,7 @@ class ARTGloveClient(QtGui.QMainWindow):
                 
 
     def buildGloveFrame(self, msg):
-        """Convert the message from string to a Glove object
+        """Convert ART message from string to a Glove object
            Store the object inside a list (1 or more hands at a time)
            Set new_frame_arrive to True if the new frame is not empty
         """
@@ -244,6 +267,12 @@ class ARTGloveClient(QtGui.QMainWindow):
             self._new_frame_arrive = True
         else:
             self._new_frame_arrive = False
+
+    def recordGloveToFile(self):
+        # Attention, only for one hand
+        glove = self._data._glove_list[0]
+        self._glove_recorder.write(glove.toFile())
+        self._glove_recorder.flush()
 
 
 
