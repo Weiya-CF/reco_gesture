@@ -97,9 +97,10 @@ class Rubine:
                 self.calculateCommonCovarianceMatrix()
 
                 # 3) calculate weight for each feature and base weight
-                gclass.calculateFeatureWeight(self._inverted_cc_matrix)
-                gclass.calculateBaseWeight()
-                print("Training for gesture",gclass_name,"has been done successfully.")
+                for g in self._class_list:
+                    g.calculateFeatureWeight(self._inverted_cc_matrix)
+                    g.calculateBaseWeight()
+                print("Training has been done successfully. Gesture",gclass_name,"was updated.")
                 return 0
 
     def showTrainingResult(self):

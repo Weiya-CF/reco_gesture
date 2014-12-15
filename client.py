@@ -28,38 +28,39 @@ class ARTGloveClient(QtGui.QMainWindow):
         tr_uname_layout.addWidget(self._tr_uname_field)
         tr_uname_layout.addWidget(self._tr_uname_button)
 
+        tr_gname_layout = QtGui.QHBoxLayout()
+        self._tr_gname_field = QtGui.QLineEdit()
+        self._tr_gname_button = QtGui.QPushButton("Confirm")
+        self._tr_gname_button.setEnabled(False)
+        self._tr_gname_button.clicked.connect(self.trConfirmGestureName)
+        tr_gname_layout.addWidget(QtGui.QLabel("Provide a gesture name:"))
+        tr_gname_layout.addWidget(self._tr_gname_field)
+        tr_gname_layout.addWidget(self._tr_gname_button)
+
         tr_record_file_layout = QtGui.QHBoxLayout()
-        self._tr_record_file_gname_field = QtGui.QLineEdit()
-        self._tr_record_file_confirm_button = QtGui.QPushButton("Start")
+        self._tr_record_file_confirm_button = QtGui.QPushButton("Record")
         self._tr_record_file_confirm_button.setEnabled(False)
+        self._tr_record_file_confirm_button.clicked.connect(self.trRecordDataToFile)
         tr_record_file_layout.addWidget(QtGui.QLabel("Record Training File:"))
-        tr_record_file_layout.addWidget(QtGui.QLabel("Gesture Name"))
-        tr_record_file_layout.addWidget(self._tr_record_file_gname_field)
         tr_record_file_layout.addWidget(self._tr_record_file_confirm_button)
 
         tr_file_layout = QtGui.QHBoxLayout()
-        self._tr_file_gname_field = QtGui.QLineEdit()
         self._tr_file_fpath_field = QtGui.QLineEdit()
         self._tr_file_select_button = QtGui.QPushButton("Browse")
         self._tr_file_confirm_button = QtGui.QPushButton("Confirm")
         self._tr_file_confirm_button.setEnabled(False)
-        tr_file_layout.addWidget(QtGui.QLabel("Gesture Name"))
-        tr_file_layout.addWidget(self._tr_file_gname_field)
         tr_file_layout.addWidget(QtGui.QLabel("File:"))
         tr_file_layout.addWidget(self._tr_file_fpath_field)
         tr_file_layout.addWidget(self._tr_file_select_button)
         tr_file_layout.addWidget(self._tr_file_confirm_button)
 
         tr_rt_layout = QtGui.QHBoxLayout()
-        self._tr_rt_gname_field = QtGui.QLineEdit()
         self._tr_rt_toggle_button = QtGui.QPushButton("Start")
         self._tr_rt_toggle_button.setEnabled(False)
         self._tr_rt_toggle_button.clicked.connect(self.trRealtimeTraining)
-        tr_rt_layout.addWidget(QtGui.QLabel("Gesture Name"))
-        tr_rt_layout.addWidget(self._tr_rt_gname_field)
         tr_rt_layout.addWidget(self._tr_rt_toggle_button)
 
-        self._tr_msg_box = QtGui.QTextEdit("This is the message window")
+        self._tr_msg_box = QtGui.QTextEdit("This is the message window for training")
 
         # --- recognition part ---
         re_global_layout = QtGui.QVBoxLayout()
@@ -77,10 +78,11 @@ class ARTGloveClient(QtGui.QMainWindow):
         re_action_layout.addWidget(self._re_gname_field)
         re_action_layout.addWidget(self._re_toggle_button)
         
-        self._re_msg_box = QtGui.QTextEdit("This is the message window")
+        self._re_msg_box = QtGui.QTextEdit("This is the message window for recognition")
 
         # --- global layout ---
         tr_global_layout.addLayout(tr_uname_layout)
+        tr_global_layout.addLayout(tr_gname_layout)
         tr_global_layout.addWidget(QtGui.QLabel("<Training from file>"))
         tr_global_layout.addLayout(tr_record_file_layout)
         tr_global_layout.addLayout(tr_file_layout)
@@ -108,7 +110,7 @@ class ARTGloveClient(QtGui.QMainWindow):
         self.statusBar().showMessage("Version 1.0")
 
         self.setMinimumSize(160,160)
-        self.resize(600,400)
+        self.resize(450,500)
 
         # UDP client part
         self.udpSocket = QtNetwork.QUdpSocket(self)
@@ -121,9 +123,11 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._new_frame_arrive = False
         self._tr_rt_running = False
         self._re_rt_running = False
+        self._tr_recording = False
         
         self._data = rds.ARTGloveFrame()
         self._glove_recorder = None
+        self._tr_recording_nb = 0 # how many samples are recorded in the file
         
         self._rp = RecoPipeline()
         
@@ -136,13 +140,18 @@ class ARTGloveClient(QtGui.QMainWindow):
                 if self._new_frame_arrive:
                     #print(self._data)
                     self._rp.trainRealTime(self._gname, self._data)
-            else:
-                if self._re_rt_running:
+            elif self._re_rt_running:
                     self.buildGloveFrame(datagram.__str__())
                     if self._new_frame_arrive:
                         reco_gname = self._rp.recognition(self._data)
                         if reco_gname is not None:
                             self._re_gname_field.setText(reco_gname)
+            else:
+                if self._tr_recording:
+                    self.buildGloveFrame(datagram.__str__())
+                    if self._new_frame_arrive:
+                        self.recordGloveToFile()
+                        self._tr_recording_nb += 1
                     
 
     def trConfirmUserName(self):
@@ -158,8 +167,7 @@ class ARTGloveClient(QtGui.QMainWindow):
                 os.makedirs("conf/"+self._uname)
 
             # enable buttons
-            self._tr_file_confirm_button.setEnabled(True)
-            self._tr_rt_toggle_button.setEnabled(True)
+            self._tr_gname_button.setEnabled(True)
             self._re_uname_label.setText(self._uname)
             self._re_toggle_button.setEnabled(True)
 
@@ -170,44 +178,60 @@ class ARTGloveClient(QtGui.QMainWindow):
             
             self._tr_msg_box.append("Ready to train for user <"+self._uname+">.")
 
+    def trConfirmGestureName(self):
+        self._gname = self._tr_gname_field.text()
+        if self._gname == "":
+            self._tr_msg_box.append("Please provide a valid gesture name.")
+        else:
+            self._tr_msg_box.append("The gesture <"+self._gname+"> is ready for training.")
+
+        # enable buttons
+        self._tr_file_confirm_button.setEnabled(True)
+        self._tr_rt_toggle_button.setEnabled(True)
+        self._tr_record_file_confirm_button.setEnabled(True)
+
     def trRealtimeTraining(self):
         """ Start/Stop training for a given gesture with a valid name
             Start: pass received data to pipeline
             Stop: save the classifier to file
         """
-        self._gname = self._tr_rt_gname_field.text()
-        if self._gname == "":
-            self._tr_msg_box.append("Please provide a valid gesture name.")
+        if not self._tr_rt_running:
+            # to start
+            self._tr_rt_running = True
+            if not self._rp._classifier.hasGestureClass(self._gname):
+                self._rp._classifier.createGestureClass(self._gname)
+            self._tr_rt_toggle_button.setText("Stop")
+            self._tr_msg_box.append("Start training for <"+self._gname+">.")
         else:
-            if not self._tr_rt_running:
-                # to start
-                self._tr_rt_running = True
-                if not self._rp._classifier.hasGestureClass(self._gname):
-                    self._rp._classifier.createGestureClass(self._gname)
-                self._tr_rt_toggle_button.setText("Stop")
-                self._tr_msg_box.append("Start training for <"+self._gname+">.")
-            else:
-                # to stop
-                self._tr_rt_running = False
-                self._tr_rt_toggle_button.setText("Start")
+            # to stop
+            self._tr_rt_running = False
+            self._tr_rt_toggle_button.setText("Start")
 
-                # start to process training data
-                res = self._rp._classifier.train(self._gname)
-                if res == 0:
-                    self._rp._classifier.showTrainingResult()
-                    self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt")
-                    self._tr_msg_box.append("Stop training for <"+self._gname+">. Classifier saved.")
-                elif res == 1:
-                    self._tr_msg_box.append("Stop training for <"+self._gname+">. Not enough samples so nothing changed.")
+            # start to process training data
+            res = self._rp._classifier.train(self._gname)
+            if res == 0:
+                self._rp._classifier.showTrainingResult()
+                self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt")
+                self._tr_msg_box.append("Stop training for <"+self._gname+">. Classifier saved.")
+            elif res == 1:
+                self._tr_msg_box.append("Stop training for <"+self._gname+">. Not enough samples so nothing changed.")
 
     def trRecordDataToFile(self):
         """ Save tracking data into files, one file for a gesture, then do the training with these files """
         if not self._tr_recording:
             # to start
-            self._glove_recorder = open(self._uname+"/"+self._gname, 'w')
+            if not os.path.exists("data/"+self._uname):
+                os.makedirs("data/"+self._uname)
+            self._glove_recorder = open("data/"+self._uname+"/"+self._gname+".dat", 'w+')
             self._tr_recording = True
+            self._tr_recording_nb = 0
             self._tr_record_file_confirm_button.setText("Stop")
-            self._re_msg_box.append("Start recording data to files...")
+            self._tr_msg_box.append("Start recording data to file for gesture "+self._gname+" ...")
+        else:
+            self._tr_recording = False
+            self._tr_record_file_confirm_button.setText("Record")
+            self._glove_recorder.close()
+            self._tr_msg_box.append(str(self._tr_recording_nb)+" samples are saved in data/"+self._uname+"/"+self._gname+".dat")
         
 
 
