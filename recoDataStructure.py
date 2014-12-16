@@ -38,7 +38,7 @@ class Finger:
         return res
 
     def toFile(self):
-        res = "<"+str(self._name)+">"
+        res = "<"+str(self._name)+">\n"
         res += str(self._position[0])+" "+str(self._position[1])+" "+str(self._position[2])+"\n"
         res += str(self._orientation[0])+" "+str(self._orientation[1])+" "+str(self._orientation[2])+"\n"
         res += str(self._orientation[3])+" "+str(self._orientation[4])+" "+str(self._orientation[5])+"\n"

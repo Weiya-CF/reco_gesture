@@ -31,10 +31,17 @@ class Rubine:
             if c._name == gclass_name:
                 return True
         return False
+
+    def createEmptyFeatureList(self):
+        f_list = list()
+        for f in self._feature_list:
+            f_list.append(Feature(f._name))
+        return f_list
     
     def createGestureClass(self, gclass_name):
         """Create a gesture class with empty sampleList and weights"""
-        c = GestureClass(gclass_name, list(self._feature_list))
+        
+        c = GestureClass(gclass_name, self.createEmptyFeatureList())
         self._class_list.append(c)
         print("New gesture classe <",gclass_name,"> has been added.")
 
@@ -98,14 +105,17 @@ class Rubine:
 
                 # 3) calculate weight for each feature and base weight
                 for g in self._class_list:
+                    print("!!!!!!!!!!!!!!!!debug", g._name)
                     g.calculateFeatureWeight(self._inverted_cc_matrix)
                     g.calculateBaseWeight()
+                    g.showTrainingResult()
+                self.getGestureClassByName('flat').showTrainingResult()
                 print("Training has been done successfully. Gesture",gclass_name,"was updated.")
                 return 0
 
     def showTrainingResult(self):
-        for c in self._class_list:
-            c.showTrainingResult()
+        for g in self._class_list:
+            g.showTrainingResult()
 
     def recognition(self, s_list):
         """Take the sample list of one RecoTuple and pass it to each gesutre class, then compare the score given by each class,
