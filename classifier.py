@@ -105,11 +105,9 @@ class Rubine:
 
                 # 3) calculate weight for each feature and base weight
                 for g in self._class_list:
-                    print("!!!!!!!!!!!!!!!!debug", g._name)
                     g.calculateFeatureWeight(self._inverted_cc_matrix)
                     g.calculateBaseWeight()
-                    g.showTrainingResult()
-                self.getGestureClassByName('flat').showTrainingResult()
+                self.showTrainingResult()
                 print("Training has been done successfully. Gesture",gclass_name,"was updated.")
                 return 0
 

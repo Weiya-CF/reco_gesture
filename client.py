@@ -49,6 +49,8 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._tr_file_select_button = QtGui.QPushButton("Browse")
         self._tr_file_confirm_button = QtGui.QPushButton("Confirm")
         self._tr_file_confirm_button.setEnabled(False)
+        self._tr_file_select_button.setEnabled(False)
+        self._tr_file_confirm_button.clicked.connect(self.trFileTraining)
         tr_file_layout.addWidget(QtGui.QLabel("File:"))
         tr_file_layout.addWidget(self._tr_file_fpath_field)
         tr_file_layout.addWidget(self._tr_file_select_button)
@@ -216,6 +218,14 @@ class ARTGloveClient(QtGui.QMainWindow):
             elif res == 1:
                 self._tr_msg_box.append("Stop training for <"+self._gname+">. Not enough samples so nothing changed.")
 
+    def trFileTraining(self):
+        """Train the classifier with samples recorded in files """
+        f_path = self._tr_file_fpath_field.text()
+        self._rp.trainFromFile(f_path, self._gname)
+        self._rp.calcultatePrecision(self._gname)
+        self._rp._classifier.saveClassifierToFile("conf/"+self._uname+"/trained_classifier.txt") 
+        self._tr_msg_box.append("Training for <"+self._gname+"> is finished. Classifier saved.")
+
     def trRecordDataToFile(self):
         """ Save tracking data into files, one file for a gesture, then do the training with these files """
         if not self._tr_recording:
@@ -233,7 +243,6 @@ class ARTGloveClient(QtGui.QMainWindow):
             self._glove_recorder.close()
             self._tr_msg_box.append(str(self._tr_recording_nb)+" samples are saved in data/"+self._uname+"/"+self._gname+".dat")
         
-
 
     def reRealtimeRecognition(self):
         """ Start/Stop recognition

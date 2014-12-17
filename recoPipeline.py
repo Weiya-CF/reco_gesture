@@ -30,7 +30,7 @@ class RecoPipeline:
         if not self._classifier.hasGestureClass(gclass_name):
             self._classifier.createGestureClass(gclass_name)
         
-        sample = self._dataReceiver.getOneSampleFrame()
+        sample = self._dataReceiver.getOneSampleFrameFile()
         # while there are still data to treat
         while sample != None:
             self._featureExtractor.addSampleFrame(sample)
@@ -39,15 +39,11 @@ class RecoPipeline:
                 #print(rtuple._s_list)
             
                 self._classifier.addRecoTupleForTraining(rtuple, gclass_name)
-            sample = self._dataReceiver.getOneSampleFrame()
+            sample = self._dataReceiver.getOneSampleFrameFile()
     
         # start the training process
         self._classifier.train(gclass_name)
         self._classifier.showTrainingResult()
-            
-        # save the trained classifier
-        self._classifier.saveClassifierToFile()
-        # load the trained data for two empty classifiers, one for each hand
         
 
     def calcultatePrecision(self, gclass_name):
@@ -81,8 +77,8 @@ class RecoPipeline:
         self._dataReceiver_l.readDataFromFile("data/final_dataset2.txt")
         self._dataReceiver_r.readDataFromFile("data/final_dataset2.txt")
 
-        sample_left = self._dataReceiver_l.getOneSampleFrame()
-        sample_right = self._dataReceiver_r.getOneSampleFrame()
+        sample_left = self._dataReceiver_l.getOneSampleFrameFile()
+        sample_right = self._dataReceiver_r.getOneSampleFrameFile()
 
         # while there are still data to treat
         while sample_left != None or sample_right != None:
@@ -100,8 +96,8 @@ class RecoPipeline:
                     self._classifier.recognition(rtuple._s_list)
                     print(rtuple._l_or_r, rtuple._timestamp)
 
-            sample_left = self._dataReceiver_l.getOneSampleFrame()
-            sample_right = self._dataReceiver_r.getOneSampleFrame()
+            sample_left = self._dataReceiver_l.getOneSampleFrameFile()
+            sample_right = self._dataReceiver_r.getOneSampleFrameFile()
 
 if __name__ == "__main__":
     rp = RecoPipeline()

@@ -24,11 +24,11 @@ class DataReceiver:
 
         # create glove data and add it into the glove data list
         indice = 0
-        while indice + 38 <= len(lines):
-            glove = self.createGloveFromFile(lines[indice:indice+38])
+        while indice + 53 <= len(lines):
+            glove = self.createGloveFromFile(lines[indice:indice+53])
             if glove._l_or_r == self._l_or_r:
                 self._gloveDataList.append(glove)
-            indice += 38
+            indice += 53
 
     def createFingerFromFile(self, n, lines):
         """Function called by the createGloveFromFile function"""
@@ -59,31 +59,31 @@ class DataReceiver:
     
     def createGloveFromFile(self, lines):
         """Function called by the readDataFromFile function"""
-        pos_str = lines[6][0:-1].split(' ')
+        pos_str = lines[5][0:-1].split(' ')
         pos = list()
         for p in pos_str:
             pos.append(float(p))
 
-        ori_str = lines[7][0:-1] + ' ' + lines[8][0:-1] + ' ' + lines[9][0:-1]
+        ori_str = lines[6][0:-1] + ' ' + lines[7][0:-1] + ' ' + lines[8][0:-1]
         ori_str = ori_str.split(' ')
         ori = list()
         for o in ori_str:
             ori.append(float(o))
-        thumb = self.createFingerFromFile('thumb',lines[12:19])
-        index = self.createFingerFromFile('index',lines[20:27])
-        middle = self.createFingerFromFile('middle',lines[28:35])
+        finger_name_list = ['pouce','index','majeur','annulaire','auriculaire']
+        i = 11
+        n = 0
         fingers = list()
-        fingers.append(thumb)
-        fingers.append(index)
-        fingers.append(middle)
+        while n < 5:
+            fingers.append(self.createFingerFromFile(finger_name_list[n],lines[i+n*8:i+7+n*8]))
+            n += 1
 
         lr = -1
-        if lines[4][0:-1] == 'left':
+        if lines[3][0:-1] == 'left':
             lr = 0
         else:
             lr = 1
 
-        g = Glove(int(lines[1][0:-1]), int(lines[2][0:-1]), float(lines[3][0:-1]), lr, int(lines[5][0:-1]), fingers, pos, ori)
+        g = Glove(lines[1][0:-1], 0, lines[2][0:-1], lr, int(lines[4][0:-1]), fingers, pos, ori)
         return g
 
     def readRealTimeData(self, g_frame):

@@ -51,9 +51,9 @@ class Finger:
 class Glove:
     """The structure to store the raw data of a hand (coming from the glove of course)"""
     def __init__(self, t, gid, q, lr, fn, fingers, pos, ori):
-        self._timestamp = t
+        self._timestamp = t # float
         self._id = gid
-        self._quality = q
+        self._quality = q # float
         # 0 -> left, 1 -> right
         self._l_or_r = lr
         self._finger_number = fn
