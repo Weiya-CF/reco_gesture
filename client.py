@@ -79,6 +79,14 @@ class ARTGloveClient(QtGui.QMainWindow):
         re_action_layout.addWidget(QtGui.QLabel("Current gesture"))
         re_action_layout.addWidget(self._re_gname_field)
         re_action_layout.addWidget(self._re_toggle_button)
+
+        re_file_layout = QtGui.QHBoxLayout()
+        self._re_fpath_field = QtGui.QLineEdit()
+        self._re_file_button = QtGui.QPushButton("Confirm")
+        self._re_file_button.setEnabled(False)
+        self._re_file_button.clicked.connect(self.reFileRecognition)
+        re_file_layout.addWidget(QtGui.QLabel("<Reco From File>"))
+        re_file_layout.addWidget
         
         self._re_msg_box = QtGui.QTextEdit("This is the message window for recognition")
 
