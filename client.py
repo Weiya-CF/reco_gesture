@@ -86,7 +86,8 @@ class ARTGloveClient(QtGui.QMainWindow):
         self._re_file_button.setEnabled(False)
         self._re_file_button.clicked.connect(self.reFileRecognition)
         re_file_layout.addWidget(QtGui.QLabel("<Reco From File>"))
-        re_file_layout.addWidget
+        re_file_layout.addWidget(self._re_fpath_field)
+        re_file_layout.addWidget(self._re_file_button)
         
         self._re_msg_box = QtGui.QTextEdit("This is the message window for recognition")
 
@@ -101,6 +102,7 @@ class ARTGloveClient(QtGui.QMainWindow):
         tr_global_layout.addWidget(self._tr_msg_box)
         re_global_layout.addLayout(re_uname_layout)
         re_global_layout.addLayout(re_action_layout)
+        re_global_layout.addLayout(re_file_layout)
         re_global_layout.addWidget(self._re_msg_box)
         tab_training.setLayout(tr_global_layout)
         tab_reco.setLayout(re_global_layout)
@@ -180,6 +182,7 @@ class ARTGloveClient(QtGui.QMainWindow):
             self._tr_gname_button.setEnabled(True)
             self._re_uname_label.setText(self._uname)
             self._re_toggle_button.setEnabled(True)
+            self._re_file_button.setEnabled(True)
 
             # load the classifier
             fname = "conf/"+self._uname+"/trained_classifier.txt"
@@ -270,7 +273,11 @@ class ARTGloveClient(QtGui.QMainWindow):
             self._re_rt_running = False
             self._re_toggle_button.setText("Start")
             self._re_msg_box.append("Recognition stopped.")
-                
+
+    def reFileRecognition(self):
+        self._re_msg_box.append("Start to do recognition from file.")
+        self._rp.recognitionFromFile(self._re_fpath_field.text())
+        self._re_msg_box.append("Recognition from file stopped.") 
 
     def buildGloveFrame(self, msg):
         """Convert ART message from string to a Glove object

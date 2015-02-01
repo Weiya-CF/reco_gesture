@@ -21,14 +21,19 @@ class DataReceiver:
         f = open(filePath, 'r')
         lines = f.readlines()
         f.close()
+        print(len(lines), "are read")
 
         # create glove data and add it into the glove data list
         indice = 0
-        while indice + 53 <= len(lines):
+        limit = len(lines)
+        print(limit)
+        n = 0
+        while indice + 53 <= limit:
             glove = self.createGloveFromFile(lines[indice:indice+53])
-            if glove._l_or_r == self._l_or_r:
-                self._gloveDataList.append(glove)
+            n += 1
+            self._gloveDataList.append(glove)
             indice += 53
+        print(n,"samples are created.")
 
     def createFingerFromFile(self, n, lines):
         """Function called by the createGloveFromFile function"""

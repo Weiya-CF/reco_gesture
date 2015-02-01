@@ -11,13 +11,6 @@ class RecoPipeline:
         self._dataReceiver = DataReceiver(1)
         self._featureExtractor = FeatureExtractor()
         
-        # for recognition
-        self._dataReceiver_l = DataReceiver(0)
-        self._dataReceiver_r = DataReceiver(1)
-
-        self._featureExtractor_l = FeatureExtractor()
-        self._featureExtractor_r = FeatureExtractor()
-
         self._classifier = Rubine("conf/feature_list.txt")
         
 
@@ -60,13 +53,12 @@ class RecoPipeline:
 
     def recognition(self, g_frame):
         """The main function to do gesture recognition, now only for right hand (TODO)"""
-        self._dataReceiver_r.readRealTimeData(g_frame)
-        #sample_left = self._dataReceiver_l.getOneSampleFrameRT()
-        sample_right = self._dataReceiver_r.getOneSampleFrameRT()
+        self._dataReceiver.readRealTimeData(g_frame)
+        sample = self._dataReceiver.getOneSampleFrameRT()
 
-        self._featureExtractor_r.addSampleFrame(sample_right)
-        if self._featureExtractor_r._seg_activated == True:
-            rtuple = self._featureExtractor_r.getRecoTuple()
+        self._featureExtractor.addSampleFrame(sample)
+        if self._featureExtractor._seg_activated == True:
+            rtuple = self._featureExtractor.getRecoTuple()
             return self._classifier.recognition(rtuple._s_list)
         else:
             return None
@@ -74,31 +66,23 @@ class RecoPipeline:
     def recognitionFromFile(self, file_path):
         """Gesture recognition for the data stored in a file"""
         print("Begin recognition process from file...")
-        self._dataReceiver_l.readDataFromFile("data/final_dataset2.txt")
-        self._dataReceiver_r.readDataFromFile("data/final_dataset2.txt")
-
-        sample_left = self._dataReceiver_l.getOneSampleFrameFile()
-        sample_right = self._dataReceiver_r.getOneSampleFrameFile()
-
+        self._dataReceiver.readDataFromFile(file_path)
+        
+        sample = self._dataReceiver.getOneSampleFrameFile()
+        
         # while there are still data to treat
-        while sample_left != None or sample_right != None:
-            if sample_left != None:
-                self._featureExtractor_l.addSampleFrame(sample_left)
-                if self._featureExtractor_l._seg_activated == True:
-                    rtuple = self._featureExtractor_l.getRecoTuple()
-                    self._classifier.recognition(rtuple._s_list)
-                    print(rtuple._l_or_r, rtuple._timestamp)
+        n = 0
+        while sample != None:
+            self._featureExtractor.addSampleFrame(sample)
+            if self._featureExtractor._seg_activated == True:
+                rtuple = self._featureExtractor.getRecoTuple()
+                self._classifier.recognition(rtuple._s_list)
+                print(rtuple._l_or_r, rtuple._timestamp)
+                n += 1
+            sample = self._dataReceiver.getOneSampleFrameFile()
+        print(n,"gestures are recognized from file.")
 
-            if sample_right != None:
-                self._featureExtractor_r.addSampleFrame(sample_right)
-                if self._featureExtractor_r._seg_activated == True:
-                    rtuple = self._featureExtractor_r.getRecoTuple()
-                    self._classifier.recognition(rtuple._s_list)
-                    print(rtuple._l_or_r, rtuple._timestamp)
-
-            sample_left = self._dataReceiver_l.getOneSampleFrameFile()
-            sample_right = self._dataReceiver_r.getOneSampleFrameFile()
-
+        
 if __name__ == "__main__":
     rp = RecoPipeline()
     rp.train("data/flat_twohands.txt", "flat")
