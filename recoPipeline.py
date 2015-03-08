@@ -37,7 +37,27 @@ class RecoPipeline:
         # start the training process
         self._classifier.train(gclass_name)
         self._classifier.showTrainingResult()
-        
+
+        print("DEBUG")
+        for cl in self._classifier._class_list:
+            print(cl._name)
+            i = 0
+
+            while i < cl._co_matrix._size:
+                res = 0
+                k = 0
+                while k < cl._train_sample_nb:
+                    res += cl._sample_list[k][i]
+                    k += 1
+                print(i, " : ", cl.getFeatureAverage(i))
+                i += 1
+            print(cl._co_matrix)
+        print(self._classifier._cc_matrix)
+        print(self._classifier._inverted_cc_matrix)
+
+        # reset the objects
+        del self._dataReceiver._gloveDataList[:]
+        del self._featureExtractor._sample_list[:]
 
     def calcultatePrecision(self, gclass_name):
         """Get the precision of recognition for a given gesture class"""

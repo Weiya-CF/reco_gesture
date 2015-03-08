@@ -43,17 +43,20 @@ class FeatureExtractor:
                 while i < len(slist):
                     avg_values[i] += slist[i]
                     i += 1
-            for v in avg_values:
-                if self._seg_threshold != 0:
-                    v = v/self._seg_threshold
+
+            if self._seg_threshold != 0:
+                i = 0
+                while i < len(avg_values):
+                    avg_values[i] = avg_values[i]/self._seg_threshold
+                    i += 1
         
             self._tuple = RecoTuple(g._timestamp,g._id,g._quality,g._l_or_r,g._finger_number, avg_values)
 
+            print("debug: ",avg_values)
+            
             # Reset the list of sample lists
-            i = 0
-            while i < self._seg_threshold:
-                del self._sample_list[0]
-                i += 1
+            del self._sample_list[:]
+            
 
     def getRecoTuple(self):
         self._seg_activated = False

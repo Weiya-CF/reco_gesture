@@ -150,7 +150,7 @@ class GestureClass:
         while i < self._train_sample_nb:
             res += self._sample_list[i][f_id]
             i += 1
-        res = res / len(self._sample_list)
+        res = res / self._train_sample_nb
         return res
 
     def calculateCovarianceMatrix(self):

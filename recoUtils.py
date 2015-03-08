@@ -162,3 +162,6 @@ if __name__ == "__main__":
     print(m)
     print(m.inverted())
 
+    # test for distance
+    print(distanceOfPosition([0.0, 0.0, 0.0], [28.7, -9.6, 55.2]))
+
