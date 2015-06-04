@@ -71,7 +71,7 @@ class Rubine:
                     res += gclass._co_matrix.get(i,j)
                     sample_nb += len(gclass._sample_list)
                 res = res / (sample_nb - len(self._class_list))
-                self._cc_matrix.set(i,j,res)
+                self._cc_matrix.set(i,j,round(res,GP))
                 j += 1
             j = 0
             i += 1
@@ -107,11 +107,13 @@ class Rubine:
                 for g in self._class_list:
                     g.calculateFeatureWeight(self._inverted_cc_matrix)
                     g.calculateBaseWeight()
-                self.showTrainingResult()
-                print("Training has been done successfully. Gesture",gclass_name,"was updated.")
+                
+                print("Training has been done successfully. Gesture <",gclass_name,"> was updated.")
                 return 0
 
     def showTrainingResult(self):
+        print("Showing the training result:\n The common variance matrix:")
+        print(self._cc_matrix)
         for g in self._class_list:
             g.showTrainingResult()
 

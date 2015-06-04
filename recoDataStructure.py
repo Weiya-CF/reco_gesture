@@ -1,5 +1,7 @@
 from recoUtils import Matrix
 
+GP = 4 # Global Precision for floating number 
+
 class ARTGloveFrame:
     """The structure which contains a frame of tracking data"""
     def __init__(self):
@@ -54,15 +56,13 @@ class Glove:
         self._timestamp = t # float
         self._id = gid
         self._quality = q # float
-        # 0 -> left, 1 -> right
-        self._l_or_r = lr
+        self._l_or_r = lr # 0 -> left, 1 -> right
         self._finger_number = fn
-        # A list (x, y, z)
-        self._position = pos
-        # A list containing a 3*3 orientation matrix
-        self._orientation = ori
-        # A list of fingers
-        self._fingers = fingers
+        
+        self._position = pos # A list (x, y, z)
+        self._orientation = ori # A list containing a 3*3 orientation matrix
+        
+        self._fingers = fingers # A list of fingers
 
     def __str__(self):
         res = "Timestamp: "+str(self._timestamp)+"\nID: "+str(self._id)+"\nQuality: "+str(self._quality)+"\nLR: "
@@ -150,7 +150,7 @@ class GestureClass:
         while i < self._train_sample_nb:
             res += self._sample_list[i][f_id]
             i += 1
-        res = res / self._train_sample_nb
+        res = round(res / self._train_sample_nb, GP)
         return res
 
     def calculateCovarianceMatrix(self):
@@ -163,7 +163,7 @@ class GestureClass:
                 while k < self._train_sample_nb:
                     res += (self._sample_list[k][i] - self.getFeatureAverage(i)) * (self._sample_list[k][j] - self.getFeatureAverage(j))
                     k += 1
-                self._co_matrix.set(i,j,res)
+                self._co_matrix.set(i,j,round(res,GP))
                 j += 1
             j = 0
             i += 1
@@ -172,7 +172,7 @@ class GestureClass:
 
     def calculateFeatureWeight(self, inv_ccmatrix):
         if inv_ccmatrix is None:
-            print("Calculate inverse ccmatrix first")
+            print("Calculate common inverse matrix first")
             return None
         else:
             w = 0
@@ -183,7 +183,7 @@ class GestureClass:
                     w += inv_ccmatrix.get(i,f_id) * self.getFeatureAverage(i)
                     i += 1
                 i = 0
-                self._feature_list[f_id].setWeight(w)
+                self._feature_list[f_id].setWeight(round(w,GP))
                 f_id += 1
             print("Feature weights calculation is done.")
         
@@ -194,13 +194,16 @@ class GestureClass:
             w += self._feature_list[i]._weight * self.getFeatureAverage(i)
             i += 1
         w = - (w / 2)
-        self._base_weight = w
+        self._base_weight = round(w,GP)
         print("Base weight calculation is done.")
 
     def showTrainingResult(self):
         print("Class Name:",self._name,"\nBase weight:",self._base_weight)
+        print("The variance matrix:")
+        print(self._co_matrix)
         for f in self._feature_list:
             print(f._name,":",f._weight)
+        print("\n")
 
     def giveScore(self, s_list):
         """Give a score for the input recoTuple"""

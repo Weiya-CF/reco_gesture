@@ -52,7 +52,7 @@ class FeatureExtractor:
         
             self._tuple = RecoTuple(g._timestamp,g._id,g._quality,g._l_or_r,g._finger_number, avg_values)
 
-            print("debug: ",avg_values)
+            #print("debug: ",avg_values)
             
             # Reset the list of sample lists
             del self._sample_list[:]

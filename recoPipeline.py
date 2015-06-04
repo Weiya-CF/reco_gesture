@@ -38,7 +38,7 @@ class RecoPipeline:
         self._classifier.train(gclass_name)
         self._classifier.showTrainingResult()
 
-        print("DEBUG")
+        """print("DEBUG")
         for cl in self._classifier._class_list:
             print(cl._name)
             i = 0
@@ -53,7 +53,7 @@ class RecoPipeline:
                 i += 1
             print(cl._co_matrix)
         print(self._classifier._cc_matrix)
-        print(self._classifier._inverted_cc_matrix)
+        print(self._classifier._inverted_cc_matrix)"""
 
         # reset the objects
         del self._dataReceiver._gloveDataList[:]
