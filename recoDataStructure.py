@@ -108,7 +108,7 @@ class RecoTuple:
 
 
 class Feature:
-    """A character which can help to determine a gesture, e.g., the distance between the hand center and index tip"""
+    """A factor which can help to determine a gesture, e.g., the distance between the hand center and index tip"""
     def __init__(self, n, w=0):
         self._name = n
         self._weight = w
@@ -198,9 +198,10 @@ class GestureClass:
         print("Base weight calculation is done.")
 
     def showTrainingResult(self):
-        print("Class Name:",self._name,"\nBase weight:",self._base_weight)
+        print("Class Name:",self._name)
         print("The variance matrix:")
         print(self._co_matrix)
+        print("Base weight:",self._base_weight)
         for f in self._feature_list:
             print(f._name,":",f._weight)
         print("\n")
