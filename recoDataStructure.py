@@ -144,7 +144,7 @@ class GestureClass:
         return res
     
     def getFeatureAverage(self, f_id):
-        """Calcultate the average value of a given feature"""
+        """Compute the average value of a given feature"""
         res = 0
         i = 0
         while i < self._train_sample_nb:
@@ -175,14 +175,13 @@ class GestureClass:
             print("Calculate common inverse matrix first")
             return None
         else:
-            w = 0
-            i = 0
             f_id = 0
             while f_id < len(self._feature_list):
+                i = 0
+                w = 0
                 while i < len(self._feature_list):
                     w += inv_ccmatrix.get(i,f_id) * self.getFeatureAverage(i)
                     i += 1
-                i = 0
                 self._feature_list[f_id].setWeight(round(w,GP))
                 f_id += 1
             print("Feature weights calculation is done.")
